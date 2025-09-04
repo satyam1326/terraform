@@ -1,16 +1,23 @@
-name: Terraform Deploy
+name: Terraform Apply/Destroy
 
 on:
-  push:
-    branches:
-      - main   # runs when you push to main branch
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose apply or destroy"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
   terraform:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Terraform
@@ -26,10 +33,13 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Action
+      - name: Terraform Apply/Destroy
         run: |
           if [ "${{ github.event.inputs.action }}" = "apply" ]; then
             terraform apply -auto-approve
-          else
+          elif [ "${{ github.event.inputs.action }}" = "destroy" ]; then
             terraform destroy -auto-approve
+          else
+            echo "Invalid action: ${{ github.event.inputs.action }}"
+            exit 1
           fi
